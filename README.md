@@ -1,5 +1,37 @@
 # SETUP POSTGRESQL DATABASE FOR DJANGO WITH DOCKER
 
+Steps to install `pip`, `pipenv`:
+
+```bash
+sudo apt update
+sudo apt install python3-pip
+python3 -m pip install --upgrade pip
+pip install pipenv
+```
+
+*Check the installation:*
+
+```bash
+pip --version
+pipenv --version
+```
+
+*if `not found` error occurs, add `pip` `pipenv` to the PATH:*
+
+```bash
+export PATH="$HOME/.local/bin:$PATH"
+source ~/.bashrc
+```
+*and restart the terminal.*
+
+*If still not working, add the export statement to the `.bashrc` file.*
+
+```bash
+vim ~/.bashrc
+```
+*Add the `export PATH="$HOME/.local/bin:$PATH"` to the end of the file. And save, exit. `source ~/.bashrc` again and restart the terminal.*  
+
+
 ## 1. In the root directory of the project, activating virtual environment with pipenv:
 
 ```bash
@@ -12,6 +44,8 @@ pipenv shell
 pipenv install django
 ```
 ## 3. Creating new Django project:
+
+**NOTE:** *NO NEED TO CREATE A NEW PROJECT IF `_config` DIRECTORY ALREADY EXISTS. !!!*
 
 ```bash
 django-admin startproject _config .
@@ -128,6 +162,16 @@ pipenv install psycopg2
 ```
 
 **Note:** *THIS PRODUCES ERRORS ON SCHOOL'S DUMPS... Likely related to the dependencies for `psycopg2` which had to be installed with `sudo` access.. Looking for solution..*
+
+*So, solution is to install the dependencies for `psycopg2` with `sudo` access:*
+
+```bash
+sudo apt update
+sudo apt install python3-dev libpq-dev
+```
+*Then, `pipenv install psycopg2`. This should work fine.*  
+
+*However, this is not the solution for the school's dumps...*  
 
 
 ## 11. Adding the following lines to the `Dockerfile` to install PostgreSQL dependencies:
