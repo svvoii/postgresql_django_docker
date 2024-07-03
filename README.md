@@ -38,6 +38,8 @@ vim ~/.bashrc
 pipenv shell
 ```
 
+*Do `pipenv --venv` to check if the virtual environment is activated. It will show the path to the virtual environment.*  
+
 ## 2. Installing Django:
 
 ```bash
@@ -57,8 +59,14 @@ django-admin startproject _config .
 
 ```txt
 DEBUG=True
-SECRET_KEY='your_secret_key'
+SECRET_KEY='some_secret_words'
 ALLOWED_HOSTS=*
+DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+
+# postgres
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=postgres
 ```
 
 ## 5. Installing the package to manage environment variables:
@@ -156,6 +164,22 @@ docker-compose up --build
 
 
 ## 10. Installing dependencies for PostgreSQL:
+
+**NOTE:** *Before installing `psycopg2` on Linux, the following dependencies should be available:*  
+
+```bash
+sudo apt update
+sudo apt install python3-dev libpq-dev
+```
+
+*On MacOS M1, simply install the postgresql with brew before installing `psycopg2`.*  
+
+```bash
+brew update
+brew install postgresql
+```
+
+*Then, install `psycopg2` with pipenv:*  
 
 ```bash
 pipenv install psycopg2
