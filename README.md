@@ -55,28 +55,29 @@ pipenv shell
 **NOTE:** *Created virtual environments with `pipenv` are stored in the `~/.local/share/virtualenvs` directory.*  
 
 
-## 2. Installing Django:
+## 2. Installing Django and creating a new Django project:
 
+*To install Django:*  
 ```bash
 pipenv install django
 ```
 
-
-## 3. Creating new Django project:
-
+*To create a new Django project:*  
 ```bash
 django-admin startproject _my_project
 ```
 
 
-## 4. Installing the package to manage environment variables:
+## 3. Installing the package to manage environment variables and creating `.env` file:
+
+
+*To install the package `django-environ` to manage environment variables:*  
 
 ```bash
 pipenv install django-environ
 ```
 
-
-## 5. Creating `.env` file in the root directory of the project:
+*Creating `.env` file in the root directory of the project:*
 
 *In the `.env` file, adding the following lines:*
 
@@ -98,7 +99,7 @@ POSTGRES_DB=postgres
 ```
 
 
-## 6. Installing dependencies for PostgreSQL.
+## 4. Installing dependencies for PostgreSQL.
 
 *Django requires specific adapter `psycopg2` to connect to PostgreSQL database.*
 
@@ -161,7 +162,7 @@ python_version = "3.10"
 ```  
 
 
-## 7. Modifying `settings.py` file.
+## 5. Modifying `settings.py` file.
 
 *In `_my_project/_my_project/settitng.py` adding the following lines to read the environment variables:*  
 
@@ -190,7 +191,7 @@ DATABASES = {
 ```
 
 
-## 8. Crafting custom Docker image for Django project:
+## 6. Crafting custom Docker image for Django project:
 
 *Creating `Dockerfile` in the root directory of the project:*
 
@@ -219,11 +220,27 @@ RUN pipenv install --system --skip-lock
 
 # Copy the current directory contents into the container at the working directory
 COPY . .
+RUN chmod +x ./entrypoint.sh
 
 ```
 
 
-## 9. Adding the following lines to the `docker-compose.yml` file to include PostgreSQL service as a separate container:
+## 7. Creating `entrypoint.sh` file to run the Django project.
+
+*In the root directory of the project, creating `entrypoint.sh` file:*
+
+```bash
+#!/bin/sh
+
+python _my_project/manage.py migrate
+python _my_project/manage.py runserver 0.0.0.0:8000
+```
+
+*The script will run the Django project. It can be modified as needed.*  
+
+
+
+## 8. Adding the following lines to the `docker-compose.yml` file to include PostgreSQL service as a separate container:
 
 ```yml
 services:
@@ -236,8 +253,7 @@ services:
     build: 
       context: .
     command: >
-      sh -c "python _my_project/manage.py migrate &&
-              python _my_project/manage.py runserver 0.0.0.0:8000"
+      sh -c "./entrypoint.sh"
     ports:
       - "8000:8000"
     env_file: .env
@@ -250,7 +266,7 @@ volumes:
 ```
 
 
-## 10. Running the following command to build the Docker image and start the container to check if everything is working:
+## 8. Running the following command to build the Docker image and start the container to check if everything is working:
 
 ```bash
 docker-compose build

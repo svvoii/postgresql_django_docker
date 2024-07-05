@@ -16,3 +16,4 @@ RUN pipenv install --system --skip-lock
 
 # Copy the current directory contents into the working directory:
 COPY . .
+RUN chmod +x ./entrypoint.sh
