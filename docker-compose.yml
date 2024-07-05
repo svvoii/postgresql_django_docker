@@ -11,8 +11,8 @@ services:
     build: 
       context: .
     command: >
-      sh -c "python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8000"
+      sh -c "python _my_project/manage.py migrate &&
+              python _my_project/manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     env_file: .env

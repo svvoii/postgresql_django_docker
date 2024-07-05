@@ -1,6 +1,15 @@
 # SETUP POSTGRESQL DATABASE FOR DJANGO WITH DOCKER
 
+This is a guide on how to setup PostgreSQL database for Django project using Docker.  
+In this guide I use `pipenv` to manage the virtual environment for the Django project.  
+
 Steps to install `pip`, `pipenv`:
+
+**PREREQUISITES:**  
+
+*Skip if `pip` and `pipenv` are already installed. Check with `pip --version` and `pipenv --version`.*  
+
+*Ubuntu:*  
 
 ```bash
 sudo apt update
@@ -39,140 +48,70 @@ pipenv shell
 ```
 
 *Do `pipenv --venv` to check if the virtual environment is activated. It will show the path to the virtual environment.*  
+*`deactivate` to deactivate the virtual environment.*  
+*`pipenv --rm` to remove the virtual environment.*  
+*`pipenv --clear` to clear the cache.*  
+
+**NOTE:** *Created virtual environments with `pipenv` are stored in the `~/.local/share/virtualenvs` directory.*  
+
 
 ## 2. Installing Django:
 
 ```bash
 pipenv install django
 ```
+
+
 ## 3. Creating new Django project:
 
-**NOTE:** *NO NEED TO CREATE A NEW PROJECT IF `_config` DIRECTORY ALREADY EXISTS. !!!*
-
 ```bash
-django-admin startproject _config .
+django-admin startproject _my_project
 ```
 
-## 4. Creating `.env` file in the root directory of the project:
 
-*In the `.env` file, adding the following lines:*
-
-```txt
-DEBUG=True
-SECRET_KEY='some_secret_words'
-ALLOWED_HOSTS=*
-DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
-
-# postgres
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
-POSTGRES_DB=postgres
-```
-
-## 5. Installing the package to manage environment variables:
+## 4. Installing the package to manage environment variables:
 
 ```bash
 pipenv install django-environ
 ```
 
-## 6. In the `_config/settings.py` file, adding the following lines to read the environment variables:
 
-```python
-import environ
+## 5. Creating `.env` file in the root directory of the project:
 
-env = environ.Env(
-	DEBUG=(bool, False)
-)
-# reading .env file
-environ.Env.read_env()
+*In the `.env` file, adding the following lines:*
 
-# changing the following 
+```txt
+# python:
+PYTHONUNBUFFERED=1 # Prevents Python from writing pyc files to disc (equivalent to python -B option)
+PYTHONDONTWRITEBYTECODE=1 # Prevents Python from buffering stdout and stderr (equivalent to python -u option)
 
-# SECRET_KEY = 'your_secret_key'
-SECRET_KEY = env('SECRET_KEY')
+# django:
+DEBUG=True
+SECRET_KEY='some_secret_words'
+ALLOWED_HOSTS=*
+DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 
-# DEBUG = True
-DEBUG = env('DEBUG')
-
-# ALLOWED_HOSTS = ['*']
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
-...
+# postgres:
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=postgres
 ```
 
-## 7. Crafting custom Docker image for Django and PostgreSQL:
 
-*Creating `Dockerfile` in the root directory of the project:*
+## 6. Installing dependencies for PostgreSQL.
 
-```Dockerfile
-FROM python:3.10-slim-buster
+*Django requires specific adapter `psycopg2` to connect to PostgreSQL database.*
 
-WORKDIR /usr/src/app
+**NOTE 1:** *This wont work for the school's dumps with no sudo access... For solution go to NOTE 2 bellow.*    
 
-# env variables:
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
-
-
-# Install system dependencies
-RUN pip install --upgrade pip pipenv flake8
-COPY Pipfile Pipfile.lock ./
-RUN pipenv install --system --ignore-pipfile
-
-# Copy the current directory contents into the container at the working directory
-COPY . .
-
-# lint
-RUN flake8 --ignore=E501,F401 .
-
-```
-
-## 8. Creating `docker-compose.yml` file in the root directory of the project:
-
-```yml
-version: '3.7'
-
-services:
-  web:
-    build: 
-      context: .
-    command: >
-      sh -c "python manage.py runserver 0.0.0.0:8000"
-    ports:
-      - "8000:8000"
-    env_file: .env
-    volumes:
-      - .:/usr/src/app
-
-```
-
-## 9. Running the following command to build the Docker image and start the container to check if everything is working:
-
-```bash
-docker-compose up --build
-```
-**Note:** *If any error occurs, fix it and run the command again.*  
-*First time I had to fix tabs in the settings.py file (change tabs to 4 spaces in VSCode).*  
-*There might be also a clash of the Python version in the Dockerfile and the Pipfile.*  
-
-- To update the Pipfile.lock if any changes are made to the Pipfile, run the following : `pipenv lock` before running the `docker-compose up --build` command.  
-
-- To stop the container, press `Ctrl + C`.
-- To check all the containers, run the following : `docker ps -a`.
-- To remove the container, run the following : `docker-compose down`.  
-- To check the available images run the following : `docker images`.  
-- To remove the image, run the following : `docker rmi <image_id>`.    
-
-
-## 10. Installing dependencies for PostgreSQL:
-
-**NOTE:** *Before installing `psycopg2` on Linux, the following dependencies should be available:*  
+*Before installing `psycopg2` on Linux, the following dependencies should be available `libpq-dev`:*  
 
 ```bash
 sudo apt update
 sudo apt install python3-dev libpq-dev
 ```
 
-*On MacOS M1, simply install the postgresql with brew before installing `psycopg2`.*  
+*On MacOS, simply install the `postgresql` with brew before installing `psycopg2`.*  
 
 ```bash
 brew update
@@ -185,35 +124,85 @@ brew install postgresql
 pipenv install psycopg2
 ```
 
-**Note:** *THIS PRODUCES ERRORS ON SCHOOL'S DUMPS... Likely related to the dependencies for `psycopg2` which had to be installed with `sudo` access.. Looking for solution..*
+**THIS PRODUCES ERRORS ON SCHOOL'S DUMPS. This is related to the system dependencies for `psycopg2` which had to be installed with `sudo` access..**   
 
-*So, solution is to install the dependencies for `psycopg2` with `sudo` access:*
+
+**NOTE 2:** *One solution is to install the `psycopg2-binary` instead:*
+
+*If you are on the school's dump:*
 
 ```bash
-sudo apt update
-sudo apt install python3-dev libpq-dev
+pipenv install psycopg2-binary
 ```
-*Then, `pipenv install psycopg2`. This should work fine.*  
 
-*However, this is not the solution for the school's dumps...*  
+**NOTE THAT INSIDE THE DOCKER CONTAINER WE CAN INSTALL PROPER DEPENDENCIES AND USE `psycopg2`, which is recommended.**
+
+*So, we modify `Pipefile` to include `psycopg2` instead of `psycopg2-binary`:*
+*In the `Pipfile` file, changing one line with `psycopg2` instead of `psycopg2-binary:*  
+
+*Contents of the `Pipfile` file:*  
+
+```Pipfile
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+django-environ = "*"
+psycopg2 = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"
+
+```  
 
 
-## 11. Adding the following lines to the `Dockerfile` to install PostgreSQL dependencies:
+## 7. Modifying `settings.py` file.
+
+*In `_my_project/_my_project/settitng.py` adding the following lines to read the environment variables:*  
+
+```python
+import environ
+
+env = environ.Env(
+	DEBUG=(bool, False)
+)
+
+environ.Env.read_env() # reading .env file
+
+# changing the following:
+
+SECRET_KEY = env('SECRET_KEY')
+
+DEBUG = env('DEBUG')
+
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS')
+...
+...
+DATABASES = {
+	'default': env.db()
+}
+...
+```
+
+
+## 8. Crafting custom Docker image for Django project:
+
+*Creating `Dockerfile` in the root directory of the project:*
 
 ```Dockerfile
 FROM python:3.10-slim-buster
 
 # Set the working directory in the container
-WORKDIR /usr/src/app
-
+WORKDIR /app
 
 # env variables:
-
-# Prevents Python from writing pyc files to disc (equivalent to python -B option)
 ENV PYTHONUNBUFFERED 1
-# Prevents Python from buffering stdout and stderr (equivalent to python -u option)
 ENV PYTHONDONTWRITEBYTECODE 1
-
 
 # Install psycopg2 dependencies
 RUN apt-get update && apt-get install -y \
@@ -221,22 +210,20 @@ RUN apt-get update && apt-get install -y \
 	libpq-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-
-# Install system dependencies
-RUN pip install --upgrade pip pipenv flake8
-COPY Pipfile* ./
-RUN pipenv install --system --ignore-pipfile
-
+# Upgrade pip and install pipenv
+RUN pip install --upgrade pip pipenv
+# Copy the Pipfile (only) to the container
+COPY Pipfile ./
+# Install the dependencies using `Pipefile`
+RUN pipenv install --system --skip-lock
 
 # Copy the current directory contents into the container at the working directory
 COPY . .
 
-# lint
-RUN flake8 --ignore=E501,F401 .
 ```
 
 
-## 12. Adding the following lines to the `docker-compose.yml` file to include PostgreSQL service:
+## 9. Adding the following lines to the `docker-compose.yml` file to include PostgreSQL service as a separate container:
 
 ```yml
 services:
@@ -249,8 +236,8 @@ services:
     build: 
       context: .
     command: >
-      sh -c "python manage.py migrate &&
-              python manage.py runserver 0.0.0.0:8000"
+      sh -c "python _my_project/manage.py migrate &&
+              python _my_project/manage.py runserver 0.0.0.0:8000"
     ports:
       - "8000:8000"
     env_file: .env
@@ -263,16 +250,26 @@ volumes:
 ```
 
 
-## 13. Adding the following lines to the `settings.py` file to configure the database:
+## 10. Running the following command to build the Docker image and start the container to check if everything is working:
 
-```python
-...
-DATABASES = {
-	'default': env.db()
-}
-...
+```bash
+docker-compose build
 ```
+*This will build the custom Docker image.*
 
-**Note:** *At this point the setup should be working fine for the local development environment.*  
-**THIS DOES NOT WORK FOR SCHOOL'S DUMPS...**  
+```bash
+docker-compose up
+```
+*This will start the containers and run the Django project.*  
+
+*Check the `localhost:8000` in the browser to see if the Django project is running.*  
+
+- `Ctrl + C` - to stop the container, press.
+- `docker ps -a` - to check all the containers.
+- `docker-compose down` - to remove the containers.  
+- `docker images` - to check the available images (and their IDs).  
+- `docker rmi <image_id>` - to remove the image.    
+
+
+**NOTE:** *At this point the setup should be working fine with Django project in a docker container.*  
 
