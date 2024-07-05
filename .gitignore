@@ -1,3 +1,6 @@
+.venv
 Pipfile
 Pipfile.lock
 .env
+# requirements.txt
+__pycache__

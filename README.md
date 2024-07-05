@@ -276,4 +276,3 @@ DATABASES = {
 **Note:** *At this point the setup should be working fine for the local development environment.*  
 **THIS DOES NOT WORK FOR SCHOOL'S DUMPS...**  
 
-
