@@ -274,8 +274,8 @@ docker-compose up
 
 *Check the `localhost:8000` in the browser to see if the Django project is running.*  
 
-- `Ctrl + C` - to stop the container, press.
-- `docker ps -a` - to check all the containers.
+- `Ctrl + C` - to stop the containers.
+- `docker ps -a` - to check all available containers.
 - `docker-compose down` - to remove the containers.  
 - `docker images` - to check the available images (and their IDs).  
 - `docker rmi <image_id>` - to remove the image.    
