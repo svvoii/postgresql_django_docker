@@ -259,7 +259,7 @@ volumes:
 ```
 
 
-## 9. Running the following command to build the Docker image and start the container to check if everything is working:
+## 9. Running the following commands to build the Docker images and start the containers.
 
 ```bash
 docker-compose build
