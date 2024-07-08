@@ -233,8 +233,7 @@ python _my_project/manage.py runserver 0.0.0.0:8000
 *The script will run the Django project. It can be modified as needed.*  
 
 
-
-## 8. Adding the following lines to the `docker-compose.yml` file to include PostgreSQL service as a separate container:
+## 8. Crafting `docker-compose.yml` file to run the Django project with PostgreSQL database in a separate container.
 
 ```yml
 services:
@@ -243,6 +242,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
       env_file: .env
+
   web:
     build: 
       context: .
@@ -256,11 +256,10 @@ services:
 
 volumes:
   postgres_data:
-
 ```
 
 
-## 8. Running the following command to build the Docker image and start the container to check if everything is working:
+## 9. Running the following command to build the Docker image and start the container to check if everything is working:
 
 ```bash
 docker-compose build
