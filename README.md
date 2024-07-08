@@ -198,27 +198,21 @@ DATABASES = {
 ```Dockerfile
 FROM python:3.10-slim-buster
 
-# Set the working directory in the container
+# Seting working directory in the container:
 WORKDIR /app
 
-# env variables:
-ENV PYTHONUNBUFFERED 1
-ENV PYTHONDONTWRITEBYTECODE 1
-
-# Install psycopg2 dependencies
+# Installing dependencies for psycopg2:
 RUN apt-get update && apt-get install -y \
 	build-essential \
 	libpq-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip and install pipenv
+# Installing dependencies for the project:
 RUN pip install --upgrade pip pipenv
-# Copy the Pipfile (only) to the container
 COPY Pipfile ./
-# Install the dependencies using `Pipefile`
 RUN pipenv install --system --skip-lock
 
-# Copy the current directory contents into the container at the working directory
+# Copy the current directory contents into the working directory:
 COPY . .
 RUN chmod +x ./entrypoint.sh
 
