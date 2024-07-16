@@ -241,7 +241,7 @@ services:
     image: postgres:13.3
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-      env_file: .env
+    env_file: .env
 
   web:
     build: 
