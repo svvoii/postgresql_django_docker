@@ -90,9 +90,10 @@ PYTHONDONTWRITEBYTECODE=1 # Prevents Python from buffering stdout and stderr (eq
 DEBUG=True
 SECRET_KEY='some_secret_words'
 ALLOWED_HOSTS=*
-DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 
 # postgres:
+
+DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=postgres
@@ -282,4 +283,63 @@ docker-compose up
 
 
 **NOTE:** *At this point the setup should be working fine with Django project in a docker container.*  
+
+
+## 10. Cloud based PostgreSQL DB
+
+**NOTE:** *This will show an example of how to setup cloud based postgresql.*
+*Skip if you want to use the DB in the separate container.*  
+
+*All that needed is to remove the `db` service from `docker-compose.yml` file and add proper credentials to the `.env` file.*  
+
+- This is how the `docker-compose.yml` file might look like:
+
+```yml
+services:
+
+  web:
+    build: 
+      context: .
+    command: >
+      sh -c "./entrypoint.sh"
+    ports:
+      - "8000:8000"
+    env_file: .env
+    volumes:
+      - .:/usr/src/app
+
+volumes:
+  postgres_data:
+```
+
+- This is how the `.env` file might look like:
+
+**NOTE:** *In this example we use cloud based service offered by [neon](https://console.neon.tech/) which povides the database we need for this project.*  
+- Why ? - *It is free for basic use, super easy to setup adatabase, relatively easy to setup connection for our Django project.*
+
+```txt
+# python:
+PYTHONUNBUFFERED=1
+PYTHONDONTWRITEBYTECODE=1
+
+# django:
+DEBUG=True
+SECRET_KEY='some_secret_words'
+ALLOWED_HOSTS=*
+
+# postgres:
+
+PGHOST='find it on your neon project dashboard'
+PGDATABASE='find it on your neon project dashboard'
+PGUSER='find it on your neon project dashboard'
+PGPASSWORD='find it on your neon project dashboard'
+PGENDPOINTID='this is your neon project ID'
+
+DATABASE_URL=postgres://$PGUSER:$PGPASSWORD@$PGHOST:5432/$PGDATABASE?sslmode=require&options=endpoint%3D$PGENDPOINTID
+
+```
+
+*Here, thanks to `DATABASE_URL` all the necessary credentials will be sent to the endpoint of cloud service which provides access to postgresql databas.*  
+*More info about connection and its issues [here](https://neon.tech/docs/connect/connection-errors).*
+
 
