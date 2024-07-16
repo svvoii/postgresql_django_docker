@@ -239,9 +239,10 @@ python _my_project/manage.py runserver 0.0.0.0:8000
 services:
   db:
     image: postgres:13.3
+    env_file: .env
     volumes:
       - postgres_data:/var/lib/postgresql/data/
-    env_file: .env
+
 
   web:
     build: 
