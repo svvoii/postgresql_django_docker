@@ -342,4 +342,6 @@ DATABASE_URL=postgres://$PGUSER:$PGPASSWORD@$PGHOST:5432/$PGDATABASE?sslmode=req
 *Here, thanks to `DATABASE_URL` all the necessary credentials will be sent to the endpoint of cloud service which provides access to postgresql databas.*  
 *More info about connection and its issues [here](https://neon.tech/docs/connect/connection-errors).*
 
+**HOW THIS WORKS:** *The database setting in `settings.py` : `'default': env.db()` thanks to `django-environ` package will use the postgresql variables from `.env` file and establish the access to the database via `DATABASE_URL`.*  
+
 
