@@ -215,7 +215,7 @@ RUN pipenv install --system --skip-lock
 
 # Copy the current directory contents into the working directory:
 COPY . .
-RUN chmod +x ./entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
 
 ```
 
@@ -254,7 +254,7 @@ services:
       - "8000:8000"
     env_file: .env
     volumes:
-      - .:/usr/src/app
+      - .:/app
 
 volumes:
   postgres_data:
@@ -300,16 +300,13 @@ services:
   web:
     build: 
       context: .
-    command: >
-      sh -c "./entrypoint.sh"
+    command: sh -c "./entrypoint.sh"
     ports:
       - "8000:8000"
     env_file: .env
     volumes:
-      - .:/usr/src/app
+      - .:/app
 
-volumes:
-  postgres_data:
 ```
 
 - This is how the `.env` file might look like:
