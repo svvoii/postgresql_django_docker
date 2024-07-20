@@ -95,9 +95,9 @@ DEBUG=True
 SECRET_KEY='some_secret_words'
 ALLOWED_HOSTS=*
 
-# postgres:
-
+# for PostgreSQL as well as Django in separate docker containers:
 DATABASE_URL=postgres://postgres:postgres@db:5432/postgres
+
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=postgres
@@ -248,11 +248,6 @@ python _my_project/manage.py runserver 0.0.0.0:8000
 
 ```yml
 services:
-  db:
-    image: postgres:13.3
-    env_file: .env
-    volumes:
-      - postgres_data:/var/lib/postgresql/data/
 
   web:
     build:
@@ -265,8 +260,18 @@ services:
     volumes:
       - .:/app
     
+  db:
+    image: postgres:latest
+    container_name: db-app
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
 volumes:
   postgres_data:
+
 ```
 
 
@@ -334,6 +339,8 @@ SECRET_KEY='some_secret_words'
 ALLOWED_HOSTS=*
 
 # for PostgreSQL db in the cloud (AWS, neon):
+DATABASE_URL=postgres://$PGUSER:$PGPASSWORD@$PGHOST:5432/$PGDATABASE?sslmode=require
+
 PGHOST='find it on your neon project dashboard'
 PGDATABASE='find it on your neon project dashboard'
 PGUSER='find it on your neon project dashboard'
@@ -384,24 +391,23 @@ DATABASES = {
 ***Moving forward, lets see how to customize the workflow in a way where we can run the Django project on the local machine and connect to the PostgreSQL database in a Docker container.***  
 
 *For that to happen we would need to connect to the Docker container from the local machine. So, we need to specify the port in the `docker-compose.yml` file. As well as modify a bit the `DATABASE_URL` in the `.env` file.*  
-*Also for this to work properly we need to install `dj-database-url` package.*  
+
 
 ## 11. **DJANGO ON LOCAL MACHINE AND POSTGRESQL IN A CONTAINER**  
 
 *Running the PostgreSQL database in a Docker container and connecting to it from the local machine.*  
 
-**- *Intalling the `dj-database-url` package:***  
-
-```bash
-pipenv install dj-database-url
-```
 
 **- *Modifying `.env` file:***  
 
 ```txt
+...
 # for PostgreSQL in a docker container and django locally:
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
-...
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=postgres
 ```
 *Here we are changing the `db` service name to `localhost`*
 
@@ -409,15 +415,12 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
 **- *Modifying `settings.py` file:***  
 
 ```python
-import dj_database_url
 ...
 DATABASES = {
-	'default': dj_database_url.config(
-		default=env('DATABASE_URL')
-	)
+	'default': env.db()
 }
+...
 ```
-*IMPORTING `dj_database_url` and changing the `DATABASES` dictionary to use the `dj_database_url.config()` method.*  
 
 
 **- *Modifying `docker-compose.yml` file:***  
@@ -508,14 +511,21 @@ rmi:
 	@echo "${RED}Removing the images...${NC}"
 	docker rmi $$(docker images -q) --force 2>/dev/null || true
 
+rmvol:
+	@echo "${RED}Removing the volumes...${NC}"
+	docker volume rm $$(docker volume ls -q) 2>/dev/null || true
+
 ls:
 	@echo "${MAGENTA}-> Docker images:${NC}" && docker images
 	@echo "${MAGENTA}-> Docker containers:${NC}" && docker ps -a
+	@echo "${MAGENTA}-> Docker volumes:${NC}" && docker volume ls
 
 clean:
 	@echo "${RED}Cleaning all...${NC}"
 	make down
 	make rmi
+	make rmvol
+
 ```
 
 **Available commands:**
@@ -525,5 +535,6 @@ clean:
 - `make up-db` - to start the project with the database only.
 - `make down` - to stop the project (removes all containers).  
 - `make rmi` - to remove all images.  
+- `make rmvol` - to remove all volumes.
 - `make ls` - to list all images and containers.  
-- `make clean` - to clean all (stop the project, remove all containers and images).  
+- `make clean` - to clean all (stop the project, remove all containers, images and volumes).  
