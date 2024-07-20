@@ -309,12 +309,13 @@ docker-compose up
 services:
 
   web:
-    build: 
+    build:
       context: .
-	command: /bin/bash "/app/entrypoint.sh"
+    container_name: web-app
+    command: /bin/bash "/app/entrypoint.sh"
+    env_file: .env
     ports:
       - "8000:8000"
-    env_file: .env
     volumes:
       - .:/app
 
