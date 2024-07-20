@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from pathlib import Path
 import environ
+import dj_database_url
 
 
 env = environ.Env(
@@ -92,8 +93,29 @@ WSGI_APPLICATION = '_my_project.wsgi.application'
 # }
 
 DATABASES = {
-	'default': env.db()
+	# for both django and postgresql in the separate containers:
+    # 'default': env.db()
+
+	# for running django locally and postgresql in a docker container:
+	'default': dj_database_url.config(
+		default=env('DATABASE_URL')
+	)
+
+	# for using cloud based postgresql database:
+	# 'default': {
+	# 	'ENGINE': 'django.db.backends.postgresql',
+	# 	'NAME': env('PGDATABASE'),
+	# 	'USER': env('PGUSER'),
+	# 	'PASSWORD': env('PGPASSWORD'),
+	# 	'HOST': env('PGHOST'),
+	# 	'PORT': env('PGPORT', default=5432),
+	# 	'OPTIONS': {
+	# 		'sslmode': 'require',
+	# 		# 'options': f'endpoint={env("PGENDPOINTID")}'
+	# 	},
+	# }
 }
+
 
 
 # Password validation

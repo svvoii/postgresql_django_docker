@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 python _my_project/manage.py migrate
 

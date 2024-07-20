@@ -483,8 +483,6 @@ CYAN = \033[0;36m
 NC = \033[0m
 
 
-SERVICE_NAME=web
-
 build:
 	@echo "${GREEN}Building the project...${NC}"
 	docker-compose build
@@ -506,10 +504,6 @@ down:
 	docker stop $$(docker ps -a -q) 2>/dev/null || true
 	docker rm $$(docker ps -a -q) 2>/dev/null || true
 
-run:
-	@echo "${GREEN}Executing `run` command into the container...${NC}"
-	docker-compose run $(SERVICE_NAME) bash
-
 rmi:
 	@echo "${RED}Removing the images...${NC}"
 	docker rmi $$(docker images -q) --force 2>/dev/null || true
@@ -530,7 +524,6 @@ clean:
 - `make up` - to start the project (runs all services).  
 - `make up-db` - to start the project with the database only.
 - `make down` - to stop the project (removes all containers).  
-- `make run` - to run the command into the container (helps to debug if the container exists).  
 - `make rmi` - to remove all images.  
 - `make ls` - to list all images and containers.  
 - `make clean` - to clean all (stop the project, remove all containers and images).  
