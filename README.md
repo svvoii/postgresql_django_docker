@@ -1,11 +1,11 @@
-# SETUP POSTGRESQL DATABASE FOR DJANGO WITH DOCKER
+# ***SETUP POSTGRESQL DATABASE FOR DJANGO WITH DOCKER***
 
 This is a guide on how to setup PostgreSQL database for Django project using Docker.  
 In this guide I use `pipenv` to manage the virtual environment for the Django project.  
 
 Steps to install `pip`, `pipenv`:
 
-**PREREQUISITES:**  
+## 0. **PREREQUISITES:**  
 
 *Skip if `pip` and `pipenv` are already installed. Check with `pip --version` and `pipenv --version`.*  
 
@@ -41,7 +41,9 @@ vim ~/.bashrc
 *Add the `export PATH="$HOME/.local/bin:$PATH"` to the end of the file. And save, exit. `source ~/.bashrc` again and restart the terminal.*  
 
 
-## 1. In the root directory of the project, activating virtual environment with pipenv:
+## 1. **ACTIVATING VIRTUAL ENVIRONMENT**
+
+*In the root directory of the project, activating virtual environment with pipenv:*
 
 ```bash
 pipenv shell
@@ -55,7 +57,7 @@ pipenv shell
 **NOTE:** *Created virtual environments with `pipenv` are stored in the `~/.local/share/virtualenvs` directory.*  
 
 
-## 2. Installing Django and creating a new Django project:
+## 2. **INSTALLING DJANGO**  
 
 *To install Django:*  
 ```bash
@@ -68,7 +70,9 @@ django-admin startproject _my_project
 ```
 
 
-## 3. Installing the package to manage environment variables and creating `.env` file:
+## 3. **MANAGING ENVIRONMENT VARIABLES**  
+
+*Installing the package to manage environment variables and creating `.env` file:*
 
 
 *To install the package `django-environ` to manage environment variables:*  
@@ -100,7 +104,7 @@ POSTGRES_DB=postgres
 ```
 
 
-## 4. Installing dependencies for PostgreSQL.
+## 4. **POSTGRESQL DEPENDENCIES**  
 
 *Django requires specific adapter `psycopg2` to connect to PostgreSQL database.*
 
@@ -163,7 +167,7 @@ python_version = "3.10"
 ```  
 
 
-## 5. Modifying `settings.py` file.
+## 5. **SETTING UP DJANGO PROJECT**  
 
 *In `_my_project/_my_project/settitng.py` adding the following lines to read the environment variables:*  
 
@@ -192,12 +196,12 @@ DATABASES = {
 ```
 
 
-## 6. Crafting custom Docker image for Django project:
+## 6. **DOCKERIZING DJANGO PROJECT**  
 
 *Creating `Dockerfile` in the root directory of the project:*
 
 ```Dockerfile
-FROM python:3.10-slim-buster
+FROM python:3.12-slim
 
 # Seting working directory in the container:
 WORKDIR /app
@@ -220,21 +224,27 @@ RUN chmod +x /app/entrypoint.sh
 ```
 
 
-## 7. Creating `entrypoint.sh` file to run the Django project.
+## 7. **SETTING UP THE ENTRYPOINT**  
 
 *In the root directory of the project, creating `entrypoint.sh` file:*
 
 ```bash
-#!/bin/sh
+#!/bin/bash
 
 python _my_project/manage.py migrate
 python _my_project/manage.py runserver 0.0.0.0:8000
 ```
 
-*The script will run the Django project. It can be modified as needed.*  
+**NOTE:** *Since we share the volume with the container, the changes made in the local files will be reflected in the container. Even though we use `RUN chmod +x /app/entrypoint.sh` in the `Dockerfile`, there might still be an error running container: `permission denied`. This is because the file is created on the local machine and updated in the container once we mount the volume in the `docker-compose.yml` file.*  
+
+*To fix this, we use `#!/bin/bash` in the `entrypoint.sh` file and run `/bin/bash "/app/entrypoint.sh"` in the `docker-compose.yml` file. (`#!/bin/sh` might not work for that matter)*  
+
+*The script will run the Django project. It can be modified as needed later on.*  
 
 
-## 8. Crafting `docker-compose.yml` file to run the Django project with PostgreSQL database in a separate container.
+## 8. **DOCKER COMPOSE**
+
+*Adding `docker-compose.yml` file in the root directory of the project:*  
 
 ```yml
 services:
@@ -244,24 +254,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
-
   web:
-    build: 
+    build:
       context: .
-    command: >
-      sh -c "./entrypoint.sh"
+    container_name: web-app
+    command: /bin/bash "/app/entrypoint.sh"
+    env_file: .env
     ports:
       - "8000:8000"
-    env_file: .env
     volumes:
       - .:/app
-
+    
 volumes:
   postgres_data:
 ```
 
 
-## 9. Running the following commands to build the Docker images and start the containers.
+## 9. **BUILDING AND RUNNING THE DOCKER CONTAINERS**  
+
+*Running the following commands to build the Docker images and start the containers.*
 
 ```bash
 docker-compose build
@@ -285,14 +296,14 @@ docker-compose up
 **NOTE:** *At this point the setup should be working fine with Django project in a docker container.*  
 
 
-## 10. Cloud based PostgreSQL DB
+## 10. **SETTING UP CLOUD BASED POSTGRESQL DATABASE**  
 
 **NOTE:** *This will show an example of how to setup cloud based postgresql.*
 *Skip if you want to use the DB in the separate container.*  
 
 *All that needed is to remove the `db` service from `docker-compose.yml` file and add proper credentials to the `.env` file.*  
 
-- This is how the `docker-compose.yml` file might look like:
+*- **This is how the `docker-compose.yml` file might look like:***
 
 ```yml
 services:
@@ -300,7 +311,7 @@ services:
   web:
     build: 
       context: .
-    command: sh -c "./entrypoint.sh"
+	command: /bin/bash "/app/entrypoint.sh"
     ports:
       - "8000:8000"
     env_file: .env
@@ -309,10 +320,7 @@ services:
 
 ```
 
-- This is how the `.env` file might look like:
-
-**NOTE:** *In this example we use cloud based service offered by [neon](https://console.neon.tech/) which povides the database we need for this project.*  
-- Why ? - *It is free for basic use, super easy to setup adatabase, relatively easy to setup connection for our Django project.*
+*- **This is how the `.env` file might look like:***
 
 ```txt
 # python:
@@ -324,21 +332,204 @@ DEBUG=True
 SECRET_KEY='some_secret_words'
 ALLOWED_HOSTS=*
 
-# postgres:
-
+# for PostgreSQL db in the cloud (AWS, neon):
 PGHOST='find it on your neon project dashboard'
 PGDATABASE='find it on your neon project dashboard'
 PGUSER='find it on your neon project dashboard'
 PGPASSWORD='find it on your neon project dashboard'
 PGENDPOINTID='this is your neon project ID'
+```
 
-DATABASE_URL=postgres://$PGUSER:$PGPASSWORD@$PGHOST:5432/$PGDATABASE?sslmode=require&options=endpoint%3D$PGENDPOINTID
+**NOTE:** *In this example we use cloud based service offered by [neon](https://console.neon.tech/) which povides the database we need for this project.*  
+- Why ? - *It is free for basic use, super easy to setup adatabase, relatively easy to setup connection for our Django project.*
+
+*More info about database connection issues [here](https://neon.tech/docs/connect/connection-errors), if needed.*
+
+*- **This is how the `settings.py` file might look like:***
+
+```python
+...
+DATABASES = {
+	# for using cloud based postgresql database:
+	'default': {
+		'ENGINE': 'django.db.backends.postgresql',
+		'NAME': env('PGDATABASE'),
+		'USER': env('PGUSER'),
+		'PASSWORD': env('PGPASSWORD'),
+		'HOST': env('PGHOST'),
+		'PORT': env('PGPORT', default=5432),
+		'OPTIONS': {
+			'sslmode': 'require',
+			# 'options': f'endpoint={env("PGENDPOINTID")}'
+		},
+	}
+}
+...
+```
+
+***This shall allow the Django project to connect to the PostgreSQL database in the cloud.***  
+
+
+# CUSTOMIZATION OF THE WORKFLOW
+
+***So, examples above cover the basic setup of the Django project in two scenarios:***  
+1. With both the PostgreSQL database and Django project in separate Docker containers.    
+2. With PostgreSQL database in the cloud (example of neon service) which works on both ocasions:  
+  *- when the Django project is run in the separate Docker container.*  
+  *- when the Django project is run on the local machine.*  
+
+***This can be applied to a variety of projects requirements and customized as needed.***  
+
+***Moving forward, lets see how to customize the workflow in a way where we can run the Django project on the local machine and connect to the PostgreSQL database in a Docker container.***  
+
+*For that to happen we would need to connect to the Docker container from the local machine. So, we need to specify the port in the `docker-compose.yml` file. As well as modify a bit the `DATABASE_URL` in the `.env` file.*  
+*Also for this to work properly we need to install `dj-database-url` package.*  
+
+## 11. **DJANGO ON LOCAL MACHINE AND POSTGRESQL IN A CONTAINER**  
+
+*Running the PostgreSQL database in a Docker container and connecting to it from the local machine.*  
+
+**- *Intalling the `dj-database-url` package:***  
+
+```bash
+pipenv install dj-database-url
+```
+
+**- *Modifying `.env` file:***  
+
+```txt
+# for PostgreSQL in a docker container and django locally:
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/postgres
+...
+```
+*Here we are changing the `db` service name to `localhost`*
+
+
+**- *Modifying `settings.py` file:***  
+
+```python
+import dj_database_url
+...
+DATABASES = {
+	'default': dj_database_url.config(
+		default=env('DATABASE_URL')
+	)
+}
+```
+*IMPORTING `dj_database_url` and changing the `DATABASES` dictionary to use the `dj_database_url.config()` method.*  
+
+
+**- *Modifying `docker-compose.yml` file:***  
+
+*In the `docker-compose.yml` file adding the port to the `db` service:*  
+
+```yml
+services:
+
+  web:
+    build:
+      context: .
+    container_name: web-app
+    command: /bin/bash "/app/entrypoint.sh"
+    env_file: .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    
+  db:
+    image: postgres:latest
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+
+volumes:
+  postgres_data:
 
 ```
 
-*Here, thanks to `DATABASE_URL` all the necessary credentials will be sent to the endpoint of cloud service which provides access to postgresql databas.*  
-*More info about connection and its issues [here](https://neon.tech/docs/connect/connection-errors).*
-
-**HOW THIS WORKS:** *The database setting in `settings.py` : `'default': env.db()` thanks to `django-environ` package will use the postgresql variables from `.env` file and establish the access to the database via `DATABASE_URL`.*  
+*Here we are adding the port `5432:5432` to the `db` service.*
 
 
+***Once the changes are made, we can start the `db` service only:***  
+
+```bash
+docker-compose up -d db
+```
+
+**That should be it for the setup.**  
+
+
+# BONUS
+
+## 12. **MAKEFILE**   
+
+**Adding `Makefile` to make life easier with `docker` and `docker-compose` commands.**
+
+*I usually use `Makefile` to run the `docker-compose` commands. It is a simple way to run the commands with just one word. Especially in the beginning when the commands are run often.*  
+
+*it also helps to visualize the commands and the workflow.*  
+
+*Creating `Makefile` in the root directory of the project (same level with `Dockerfile` and `docker-compose.yml`):*
+
+```Makefile
+GREEN = \033[0;32m
+RED = \033[0;31m
+MAGENTA = \033[0;35m
+CYAN = \033[0;36m
+NC = \033[0m
+
+
+SERVICE_NAME=web
+
+build:
+	@echo "${GREEN}Building the project...${NC}"
+	docker-compose build
+
+build-no-cache:
+	@echo "${RED}Building the project without cache...${NC}"
+	docker-compose build --no-cache
+
+up:
+	@echo "${GREEN}Starting the project...${NC}"
+	docker-compose up
+
+up-db:
+	@echo "${GREEN}Starting the project with database...${NC}"
+	docker-compose up -d db
+
+down:
+	@echo "${RED}Stopping the project...${NC}"
+	docker stop $$(docker ps -a -q) 2>/dev/null || true
+	docker rm $$(docker ps -a -q) 2>/dev/null || true
+
+run:
+	@echo "${GREEN}Executing `run` command into the container...${NC}"
+	docker-compose run $(SERVICE_NAME) bash
+
+rmi:
+	@echo "${RED}Removing the images...${NC}"
+	docker rmi $$(docker images -q) --force 2>/dev/null || true
+
+ls:
+	@echo "${MAGENTA}-> Docker images:${NC}" && docker images
+	@echo "${MAGENTA}-> Docker containers:${NC}" && docker ps -a
+
+clean:
+	@echo "${RED}Cleaning all...${NC}"
+	make down
+	make rmi
+```
+
+**Available commands:**
+- `make build` - to build the project.
+- `make build-no-cache` - to build the project without cache.
+- `make up` - to start the project (runs all services).  
+- `make up-db` - to start the project with the database only.
+- `make down` - to stop the project (removes all containers).  
+- `make run` - to run the command into the container (helps to debug if the container exists).  
+- `make rmi` - to remove all images.  
+- `make ls` - to list all images and containers.  
+- `make clean` - to clean all (stop the project, remove all containers and images).  
