@@ -463,6 +463,12 @@ volumes:
 docker-compose up -d db
 ```
 
+*Then navigate the the directory with `manage.py` and run the server:
+
+```bash
+python manage.py runserver
+```
+
 **That should be it for the setup.**  
 
 
