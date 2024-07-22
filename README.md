@@ -505,7 +505,7 @@ up:
 	docker-compose up
 
 up-db:
-	@echo "${GREEN}Starting the project with database...${NC}"
+	@echo "${GREEN}Starting container with database only...${NC}"
 	docker-compose up -d db
 
 down:
