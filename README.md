@@ -347,6 +347,7 @@ PGUSER='find it on your neon project dashboard'
 PGPASSWORD='find it on your neon project dashboard'
 PGENDPOINTID='this is your neon project ID'
 ```
+**NOTE:** *Restart of the python environment is needed for the new env variables to be available !!*
 
 **NOTE:** *In this example we use cloud based service offered by [neon](https://console.neon.tech/) which povides the database we need for this project.*  
 - Why ? - *It is free for basic use, super easy to setup adatabase, relatively easy to setup connection for our Django project.*
@@ -409,7 +410,10 @@ POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 POSTGRES_DB=postgres
 ```
+
 *Here we are changing the `db` service name to `localhost`*
+
+**NOTE:** *Restart of the python environment is needed for the new env variables to be available !!*
 
 
 **- *Modifying `settings.py` file:***  
